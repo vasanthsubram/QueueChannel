@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:int="http://www.springframework.org/schema/integration"
+  xmlns:int-file="http://www.springframework.org/schema/integration/file"
+  xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+  xmlns:int-mail="http://www.springframework.org/schema/integration/mail"
+  xmlns:int-rmi="http://www.springframework.org/schema/integration/rmi"
+  xmlns:int-ws="http://www.springframework.org/schema/integration/ws"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/integration
+    http://www.springframework.org/schema/integration/spring-integration.xsd
+    http://www.springframework.org/schema/integration/file
+    http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+    http://www.springframework.org/schema/integration/jms
+    http://www.springframework.org/schema/integration/jms/spring-integration-jms.xsd
+    http://www.springframework.org/schema/integration/mail
+    http://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
+    http://www.springframework.org/schema/integration/rmi
+    http://www.springframework.org/schema/integration/rmi/spring-integration-rmi.xsd
+    http://www.springframework.org/schema/integration/ws
+    http://www.springframework.org/schema/integration/ws/spring-integration-ws.xsd">
+
+	<int:channel id="orderConfirmationChannel" />
+
+	<int:channel id="orderBilledChannel" />
+
+	<int:channel id="emailOrderConfirmationChannel">
+		<int:queue />
+	</int:channel>
+
+	<int:service-activator input-channel="orderConfirmationChannel" output-channel="orderBilledChannel" ref="orderManager" method="billOrder" />
+
+	<int:service-activator input-channel="orderBilledChannel" output-channel="emailOrderConfirmationChannel" ref="orderManager" method="updateInventory" />
+
+	<int:outbound-channel-adapter channel="emailOrderConfirmationChannel" ref="orderManager" method="emailOrderConfirmation">
+		<int:poller max-messages-per-poll="1" fixed-delay="100"></int:poller>
+	</int:outbound-channel-adapter>	
+	 	
+	<bean id="orderManager" class="com.learn.integration.OrderManager" />
+
+	<bean id="springIntChannelExample" class="com.learn.integration.SpringIntegrationInterChannelExample">
+		<property name="orderConfirmationChannel" ref="orderConfirmationChannel" />
+	</bean>
+	
+</beans>
